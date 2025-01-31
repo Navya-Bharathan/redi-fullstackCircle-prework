@@ -8,6 +8,15 @@ import SearchField from "../components/SearchField/SearchField.jsx";
 
 const RestaurantView = () => {
   const [dishes, setDishes] = useState([]);
+  const [searchQuery, setSearchQuery]=useState('');
+  //const [filteredDishes,setFilteredDishes]=useState([]);
+
+  /*  Step2:Pass the search input from Searchfield using callback function */
+  const searchInput=(query)=>{
+    console.log('Search input:',query);
+    setSearchQuery(query);
+  }
+  
 
   // useDebouncedCallback takes a function as a parameter and as the second parameter
   // the number of milliseconds it should wait until it is actually called so a user
@@ -22,18 +31,39 @@ const RestaurantView = () => {
         return { meals: null };
       }
       return res.json();
+
     }).then(result => {
       if (!currentEffect) {
         return;
       }
       // The ?? operator turns 'undefined' or 'null' values into a preferred default value on the right side
       // We know that result.meals can be null if there are no results, so in that case, we provide an empty array for safety
-      setDishes(result.meals ?? []);
+      const dishList=result.meals ?? [];
+      //setDishes(result.meals ?? []);
+      // Step3c: Apply filter
+    
+      if(searchQuery.trim()===''){
+        setDishes(dishList);
+        console.log(dishes);
+      }
+      else{
+        const filteredDishes=dishes.filter(item=>{ 
+          console.log(item.strMeal, searchQuery);
+         return item.strMeal.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        });
+         console.log(dishes);
+         setDishes(filteredDishes);
+        
+        console.log(searchQuery);
+        }
+       
     }).catch(() => {
       if (!currentEffect) {
         return;
       }
       setDishes([]);
+      
     })
 
     // This cleanup function is to prevent multiple API calls coming back out of sequence and setting the value of our dishes list.
@@ -47,16 +77,19 @@ const RestaurantView = () => {
     }
   }, 500);
 
+
   // useEffect can take a variable that is a function and does not need to be defined as an anonymous () => {} arrow function
   // This is especially important when using more controlled techniques like debouncing
-  useEffect(debouncedEffectHook, [debouncedEffectHook]);
-
+  useEffect(debouncedEffectHook, [debouncedEffectHook,searchQuery]);
+//Step3 b:filter the data when Query changes
+  
   return (
     <>
-      <NavBar>
+      <NavBar onSearchInputChange={searchInput}>
         <h1>ReDI React Restaurant</h1>
+      
 
-        <SearchField />
+        <SearchField onSearchInputChange={searchInput} />
       </NavBar>
 
       <div className={styles.restaurantWrapper}>
@@ -69,7 +102,7 @@ const RestaurantView = () => {
               />
             ))
           ) : (
-            <p>No dishes found :(</p>
+            <p>No dishes found :</p>
           )}
         </div>
       </div>
